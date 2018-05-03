@@ -1,6 +1,7 @@
 from http.server import BaseHTTPRequestHandler, HTTPServer
 import logging
 
+
 class S(BaseHTTPRequestHandler):
     def _set_response(self):
         self.send_response(200)
@@ -23,6 +24,7 @@ class S(BaseHTTPRequestHandler):
 
         self._set_response()
         self.wfile.write("POST request for {}".format(self.path).encode('utf-8'))
+
 
 def run(server_class=HTTPServer, handler_class=S, port=80):
     logging.basicConfig(level=logging.DEBUG)
