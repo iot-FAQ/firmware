@@ -116,7 +116,7 @@ void send_image_to_server()
   uint8_t *payload = NULL;
   int bmp_size = (camera->xres * camera->yres * 2) + BMP::headerSize;
   payload = (uint8_t*)malloc(bmp_size);
-  http.begin("http://192.168.43.24/index.html"); //HTTP
+  http.begin("http://192.168.43.215/index.html"); //HTTP
 
   for (int i = 0; i < BMP::headerSize; i++) {
     payload[i] = bmpHeader[i];

@@ -14,11 +14,11 @@ class S(BaseHTTPRequestHandler):
         self.wfile.write("GET request for {}".format(self.path).encode('utf-8'))
 
     def do_POST(self):
-        #import pdb; pdb.set_trace()
-        content_length = int(self.headers['Content-Length']) # <--- Gets the size of data
-        post_data = self.rfile.read(content_length) # <--- Gets the data itself
+        # import pdb; pdb.set_trace()
+        content_length = int(self.headers['Content-Length'])  # <--- Gets the size of data
+        post_data = self.rfile.read(content_length)  # <--- Gets the data itself
         logging.info("POST request,\nPath: %s\nHeaders:\n%s\n\n",
-                str(self.path), str(self.headers))
+                     str(self.path), str(self.headers))
         bmp_file = open("image.bmp", "wb")
         bmp_file.write(post_data)
 
@@ -37,7 +37,7 @@ def run(server_class=HTTPServer, handler_class=S, port=80):
         pass
     httpd.server_close()
     logging.info('Stopping httpd...\n')
-    
+
 
 if __name__ == '__main__':
     from sys import argv
