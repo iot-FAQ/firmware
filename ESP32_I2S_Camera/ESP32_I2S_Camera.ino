@@ -12,6 +12,8 @@
 #include "esp_deep_sleep.h"
 #include "EEPROM.h"
 
+#include "config.h"
+
 const int SIOD = 21; //SDA
 const int SIOC = 22; //SCL
 
@@ -30,6 +32,8 @@ const int D5 = 13;
 const int D6 = 12;
 const int D7 = 4;
 
+FAQ_DEVICE_CONFIG stored_device_config;
+
 #define uS_TO_S_FACTOR 1000000  /* Conversion factor for micro seconds to seconds */
 #define TIME_TO_SLEEP  30        /* Time ESP32 will go to sleep (in seconds) */
 
@@ -42,33 +46,24 @@ WiFiServer server(80);
 
 unsigned char bmpHeader[BMP::headerSize];
 int addr = 0;
-#define EEPROM_SIZE 64
 
 void setup()
 {
   Serial.begin(115200);
   delay(1000); //Take some time to open up the Serial Monitor
 
-  if (!EEPROM.begin(EEPROM_SIZE))
-  {
-    Serial.println("failed to initialise EEPROM"); delay(1000000);
-  }
+  /** 
+   *  This is here for testing purposes only. There has to be a separate FW to manage the settings in EEPROM 
+   *  Uncomment this line to FLASH the memory once. That's enough.
+   *  Configuration is stored in file "config.h"
+  **/
+  /*** BEGIN ***/
+  // write configuration to eeprom
+  write_config_2_eeprom();
+  /*** END ***/
 
-  //char * ssid = "Symbaa";
-  int size = 7;
-  //char * pass = "symba1986";
-  int sizep = 10;
-//  Serial.println("SSID:" + String(ssid));
-//  Serial.println("PASS:" + String(pass));
-//  for (int i = 0; i < size; i++) {
-//    EEPROM.write(addr, ssid[i]);
-//    addr++;
-//  }
-//  for (int i = 0; i < sizep; i++) {
-//    EEPROM.write(addr, pass[i]);
-//    addr++;
-//  }
-//  EEPROM.commit();
+  // read configration from EEPROM
+  loadStruct(&stored_device_config, sizeof(stored_device_config));
 
   //Increment boot number and print it every reboot
   ++bootCount;
@@ -78,25 +73,15 @@ void setup()
   Serial.println("Setup ESP32 to sleep for every " + String(TIME_TO_SLEEP) +
                  " Seconds");
 
-  char ssid1 [size];
-  char password1 [sizep];
-  Serial.println("Reading SSID and PASS from flash: ");
-  for (int i = 0; i < size; i++)
-  {
-    ssid1[i] = char(EEPROM.read(i));
-  }
-  Serial.println(String(ssid1));
-  for (int i = size, j = 0; i < size + sizep, j < sizep; i++, j++)
-  {
-    password1[j] = char(EEPROM.read(i));
-  }
-  Serial.println(String(password1));
-  wifiMulti.addAP(ssid1, password1);
+  Serial.println("Using SSID and PASS from flash: ");
+  Serial.println(String(stored_device_config.wifiSSID));
+  Serial.println(String(stored_device_config.wifiPass));
+  wifiMulti.addAP(stored_device_config.wifiSSID, stored_device_config.wifiPass);
 
   Serial.println("Connecting Wifi...");
   if (wifiMulti.run() == WL_CONNECTED) {
     Serial.println("WiFi connected");
-    Serial.println("IP address: ");
+    Serial.print("IP address: ");
     Serial.println(WiFi.localIP());
   }
 
@@ -110,13 +95,59 @@ void setup()
   esp_deep_sleep_start();
 }
 
+
+/*** WORKING WITH EEPROM ***/
+// Store any struct
+void storeStruct(void *data_source, size_t size)
+{
+  EEPROM.begin(size * 2);
+  for(size_t i = 0; i < size; i++)
+  {
+    char data = ((char *)data_source)[i];
+    EEPROM.write(i, data);
+  }
+  EEPROM.commit();
+}
+
+// load any struct
+void loadStruct(void *data_dest, size_t size)
+{
+    EEPROM.begin(size * 2);
+    for(size_t i = 0; i < size; i++)
+    {
+        char data = EEPROM.read(i);
+        ((char *)data_dest)[i] = data;
+    }
+}
+
+// write config to EEPROM
+void write_config_2_eeprom() {
+
+  Serial.begin(115200);
+  delay(1000); //Take some time to open up the Serial Monitor
+
+  if (!EEPROM.begin(EEPROM_SIZE))
+  {
+    Serial.println("failed to initialise EEPROM"); delay(1000000);
+  }
+
+  Serial.println("Flashing " + String(sizeof(device_config)) + " bytes to EEPROM");
+
+  storeStruct(&device_config, sizeof(device_config));
+
+  
+}
+
+
+/*** Sending image to the server ***/
 void send_image_to_server()
 {
   HTTPClient http;
   uint8_t *payload = NULL;
   int bmp_size = (camera->xres * camera->yres * 2) + BMP::headerSize;
   payload = (uint8_t*)malloc(bmp_size);
-  http.begin("http://192.168.43.215/index.html"); //HTTP
+  
+  http.begin(stored_device_config.serverURL); //HTTP
 
   for (int i = 0; i < BMP::headerSize; i++) {
     payload[i] = bmpHeader[i];
@@ -141,6 +172,8 @@ void send_image_to_server()
   http.end();
   free(payload);
 }
+
+/** loop is empty since we work in push mode **/
 void loop()
 {
 }
