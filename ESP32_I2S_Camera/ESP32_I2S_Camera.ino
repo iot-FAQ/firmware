@@ -57,6 +57,7 @@ OV7670 *camera;
 
 WiFiMulti wifiMulti;
 AsyncWebServer server(80);
+String html_response;
 
 unsigned char bmpHeader[BMP::headerSize];
 int addr = 0;
@@ -107,13 +108,9 @@ void setup()
     Serial.print("IP address: ");
     Serial.println(WiFi.softAPIP());
 
+    
     /* tell server to handle requests */
-
-    // handle request to server root
-    server.on("/", HTTP_GET, [](AsyncWebServerRequest *request){
-      // sending the HTML form
-      request->send(200, "text/html", config_form_HTML);
-    });
+    Serial.println("DEBUG: Assigning WEB Server handlers ...");
 
     // handle values saving (POST) request
     server.on("/writeConfig", HTTP_POST, [](AsyncWebServerRequest *request){
@@ -150,6 +147,7 @@ void setup()
       }
 
       // print configuration to Serial
+      Serial.println("Received configuration:");
       print_config_structure(&received_device_config);
       
 
@@ -164,11 +162,37 @@ void setup()
       write_config_2_eeprom(&received_device_config);
 
       
-      request->send(200, "text/html", "Configuration written to EEPROM");
+      request->send(200, "text/html", "<p>Configuration written to EEPROM<p><p><a href=\"/\"> Back to Configurator</a></p>");
     });
+
+    // handle request to server root
+    server.on("/", HTTP_GET, [](AsyncWebServerRequest *request){
+
+      /* read existing configuration from EEPROM */
+      loadStruct(&stored_device_config, sizeof(stored_device_config));
+      Serial.println("Existing configuration found in EEPROM:");
+      print_config_structure(&stored_device_config);
+      
+      Serial.println("DEBUG: Formatting output string ...");
+      html_response = String((char *)config_form_HTML);
+      html_response.replace("_WIFISSID", String(stored_device_config.wifiSSID));
+      html_response.replace("_WIFIPASS", String(stored_device_config.wifiPass));
+      html_response.replace("_SERVERURL", String(stored_device_config.serverURL));
+      
+      Serial.println("DEBUG: HTML Template: ");
+      Serial.println(html_response);
+      
+      // sending the HTML form
+      request->send(200, "text/html", html_response);
+    });
+
+    
 
     // begin configuration server operation; http://SERVER_IP:80/
     server.begin();
+
+    Serial.print("Server ready at http://");
+    Serial.println(WiFi.softAPIP());
      
   } else { // normal operation
 
@@ -240,12 +264,13 @@ void write_config_2_eeprom(FAQ_DEVICE_CONFIG *conf) {
 
   if (!EEPROM.begin(EEPROM_SIZE))
   {
-    Serial.println("failed to initialise EEPROM"); delay(1000000);
+    Serial.println("failed to initialise EEPROM");
+    return;
   }
 
-  Serial.println("Flashing " + String(sizeof(conf)) + " bytes to EEPROM");
+  Serial.println("Flashing " + String(sizeof(*conf)) + " bytes to EEPROM");
 
-  storeStruct(&conf, sizeof(conf)); 
+  storeStruct(conf, sizeof(*conf)); 
 }
 
 /* Validators */
