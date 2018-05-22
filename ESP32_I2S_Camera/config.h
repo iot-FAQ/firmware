@@ -4,6 +4,9 @@
  * FAQ device configuration
  */
 
+ #define FAQ_VERSION "0.01"
+ #define FAQ_BUILD "20180523"
+
 #define EEPROM_SIZE 2048
 
 // define structure keys
@@ -31,3 +34,10 @@ FAQ_DEVICE_CONFIG device_config {
 // HTML form code
 // Note: this is a long and complex string so we will store it in PROGMEM
 const char * config_form_HTML = "<h2>Device Configurator</h2><p>Firmware version: _FW_VERSION</p><form action=\"/writeConfig\" method=\"POST\"> <label class=\"label\">Network Name:</label> <input type=\"text\" name=\"wifiSSID\" value=\"_WIFISSID\" size=\"24\" maxlength=\"32\"/> <br/> <label>Password:</label> <input type=\"text\" name=\"wifiPass\" value=\"_WIFIPASS\" size=\"24\" maxlength=\"64\"/> <br/> <label>Server URL:</label> <input type=\"text\" name=\"serverURL\" value=\"_SERVERURL\" size=\"56\" maxlength=\"1024\"/> <br/> <input type=\"submit\" value=\"Submit\" /></form>";
+
+// get version
+String get_fw_version() {
+
+  return String(FAQ_VERSION) + String(" ") + String(FAQ_BUILD);
+}
+

@@ -175,6 +175,7 @@ void setup()
       
       Serial.println("DEBUG: Formatting output string ...");
       html_response = String((char *)config_form_HTML);
+      html_response.replace("_FW_VERSION", get_fw_version());
       html_response.replace("_WIFISSID", String(stored_device_config.wifiSSID));
       html_response.replace("_WIFIPASS", String(stored_device_config.wifiPass));
       html_response.replace("_SERVERURL", String(stored_device_config.serverURL));
