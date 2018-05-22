@@ -4,10 +4,12 @@
  * FAQ device configuration
  */
 
- #define FAQ_VERSION "0.01"
- #define FAQ_BUILD "20180523"
+#define FAQ_VERSION "0.01"
+#define FAQ_BUILD "20180523"
 
 #define EEPROM_SIZE 2048
+
+#define ENABLE_LED 1
 
 // define structure keys
 #define CONF_KEY_WIFISSID   "wifiSSID"

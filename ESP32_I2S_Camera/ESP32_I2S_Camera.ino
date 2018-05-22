@@ -44,6 +44,7 @@ const int D7 = 4;
 /* DEVICE PINS */
 // Let's use pin D26 as a configration pin
 #define CONF_GPIO_PIN   GPIO_NUM_26
+#define LED_GPIO_PIN   GPIO_NUM_25
 
 FAQ_DEVICE_CONFIG stored_device_config; // used to read the data from EEPROM
 FAQ_DEVICE_CONFIG received_device_config; // used to capture the data from Web Configurator
@@ -83,6 +84,9 @@ void setup()
 {
   Serial.begin(115200);
   delay(1000); //Take some time to open up the Serial Monitor
+
+  // turn off the lights
+  turn_off_light();
 
   if (isSetupModeEnabled()) { // configuration
     Serial.println("Device configuration mode is ENABLED");
@@ -223,8 +227,16 @@ void setup()
   
     camera = new OV7670(OV7670::Mode::QQVGA_RGB565, SIOD, SIOC, VSYNC, HREF, XCLK, PCLK, D0, D1, D2, D3, D4, D5, D6, D7);
     BMP::construct16BitHeader(bmpHeader, camera->xres, camera->yres);
-    Serial.println("camera  connected");
+    Serial.println("DEBUG: OV7670 Camera  connected");
+    if (ENABLE_LED) {
+      turn_on_light();
+      delay(500);
+    }   
     camera->oneFrame();
+    if (ENABLE_LED) {
+      turn_off_light();
+    }
+    
     send_image_to_server();
   
     Serial.println("Going to sleep now");
@@ -284,6 +296,23 @@ boolean vaidate_config_struct(FAQ_DEVICE_CONFIG *conf) {
    */
 
   return true;
+}
+
+/* LED Light control */
+void turn_on_light() {
+
+  gpio_set_direction(LED_GPIO_PIN, GPIO_MODE_OUTPUT);
+  Serial.println("DEBUG: Turning LED light ON");
+  gpio_set_level(LED_GPIO_PIN, 1);
+ 
+}
+
+void turn_off_light() {
+
+  gpio_set_direction(LED_GPIO_PIN, GPIO_MODE_OUTPUT);
+  Serial.println("DEBUG: Turning LED light OFF");
+  gpio_set_level(LED_GPIO_PIN, 0);
+ 
 }
 
 /* other struct routines */
