@@ -89,9 +89,13 @@ void setup()
     // ... And here we do all the configuration
 
     // starting Software-controlled Wi-Fi access point
-    char *conf_ssid = "FAQ_Config";
-    char *conf_pass = "";
-    boolean result = WiFi.softAP(conf_ssid, conf_pass);
+    char *conf_ssid = "FAQ-CONFIG";
+    WiFi.mode( WIFI_AP );
+    IPAddress ip( 192, 168, 1, 1 );
+    IPAddress gateway( 192, 168, 1, 1 );
+    IPAddress subnet( 255, 255, 255, 0 );
+    WiFi.softAPConfig( ip, gateway, subnet );
+    boolean result = WiFi.softAP(conf_ssid);
     if (!result) { // something went terribly wrong and we cannot continue; the system will halt
       Serial.println("ERROR: Unable to start configuration AP");
       return;
